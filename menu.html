@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu du Restaurant</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f8f8;
+            color: #4a3030;
+        }
+        
+        .menu-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #d1c7c7;
+        }
+        
+        .story-section {
+            background-color: #f9f5f0;
+            border-bottom: 2px solid #8b3a3a;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .story-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .story-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: #8b3a3a;
+            font-style: italic;
+        }
+        
+        .story-date {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .story-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4a3030;
+            text-align: justify;
+        }
+        
+        .loading-story {
+            text-align: center;
+            color: #8b3a3a;
+            font-style: italic;
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .menu-header {
+            text-align: center;
+            padding: 30px 20px;
+            position: relative;
+        }
+        
+        .header-decoration {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .header-line {
+            height: 5px;
+            background-color: #8b3a3a;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        .header-image {
+            margin: 0 20px;
+            font-size: 50px;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-style: italic;
+            color: #2a2a2a;
+            margin: 10px 0;
+        }
+        
+        .menu-items {
+            padding: 0 40px 40px;
+        }
+        
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .item-name {
+            font-size: 20px;
+            color: #8b3a3a;
+            font-weight: 600;
+        }
+        
+        .item-description {
+            font-size: 16px;
+            color: #4a3030;
+            margin-top: 5px;
+        }
+        
+        .item-price {
+            font-size: 18px;
+            color: #4a3030;
+            font-weight: bold;
+        }
+        
+        .menu-section {
+            margin: 40px 0;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            color: #8b3a3a;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .accras-list {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .accras-item {
+            font-size: 18px;
+            color: #4a3030;
+            margin: 8px 0;
+        }
+        
+        .accras-price {
+            font-size: 18px;
+            color: #4a3030;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .melange-item {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 20px;
+            color: #8b3a3a;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 40px;
+        }
+        
+        .item-illustration {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .cocktail-glass {
+            right: 50px;
+            top: 50%;
+        }
+        
+        .accras-icon {
+            left: 50px;
+            bottom: 30%;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .menu-items {
+                padding: 0 20px 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .item-illustration {
+                display: none;
+            }
+            
+            .header-line {
+                max-width: 100px;
+            }
+        }
+    </style>
+    <script>
+        // Configuration pour l'API
+        const API_ENDPOINT = '/api/daily-story'; // Votre endpoint backend
+        
+        // Fonction pour obtenir la date du jour au format YYYY-MM-DD
+        function getTodayDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+        
+        // Fonction pour formater la date en français
+        function formatDateFr(dateStr) {
+            const date = new Date(dateStr);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('fr-FR', options);
+        }
+        
+        // Fonction pour générer une seed unique basée sur la date
+        function generateSeed(dateStr) {
+            let hash = 0;
+            for (let i = 0; i < dateStr.length; i++) {
+                const char = dateStr.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash);
+        }
+        
+        // Fonction pour obtenir l'histoire du jour via le backend
+        async function getDailyStory() {
+    const storyContent = document.getElementById('story-content');
+    const storyDate = document.getElementById('story-date');
+    const today = getTodayDate();
+    
+    // Vérifier si une histoire est déjà en cache pour aujourd'hui
+    const cachedStory = localStorage.getItem(`story-${today}`);
+    
+    if (cachedStory) {
+        storyContent.innerHTML = cachedStory;
+        storyDate.textContent = formatDateFr(today);
+        return;
+    }
+    
+    try {
+        storyContent.innerHTML = '<div class="loading-story">Chargement de l\'histoire du jour...</div>';
+        
+        const seed = generateSeed(today);
+        const topics = [
+            "une tradition culinaire portugaise méconnue",
+            "une légende portugaise fascinante",
+            "un fait historique surprenant sur le Portugal",
+            "une anecdote sur un plat typique portugais",
+            "une histoire sur la culture vinicole portugaise",
+            "un récit sur les navigateurs portugais",
+            "une tradition festive portugaise",
+            "une histoire sur l'artisanat portugais",
+            "une anecdote sur la musique fado",
+            "un fait intéressant sur l'architecture portugaise"
+        ];
+        
+        const topicIndex = seed % topics.length;
+        const selectedTopic = topics[topicIndex];
+        
+        console.log('Envoi de la requête avec:', { topic: selectedTopic, seed: seed });
+        
+        // Appel à votre endpoint backend
+        const response = await fetch(API_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: selectedTopic,
+                seed: seed
+            })
+        });
+        
+        console.log('Statut de la réponse:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Erreur serveur:', errorText);
+            throw new Error(`Erreur serveur (${response.status}): ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Données reçues:', data);
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        const story = data.story;
+        
+        // Mettre en cache l'histoire du jour
+        localStorage.setItem(`story-${today}`, story);
+        
+        storyContent.innerHTML = story;
+        storyDate.textContent = formatDateFr(today);
+        
+    } catch (error) {
+        console.error('Erreur détaillée:', error);
+        storyContent.innerHTML = `<div class="error-message">Erreur: ${error.message}<br>Consultez la console pour plus de détails.</div>`;
+    }
+}
+        
+        // Charger l'histoire au chargement de la page
+        window.addEventListener('load', getDailyStory);
+    </script>
+</head>
+<body>
+    <div class="menu-container">
+        <!-- Section Histoire du Jour -->
+        <div class="story-section">
+            <div class="story-header">
+                <h2 class="story-title">🇵🇹 Histoire du Jour</h2>
+                <span class="story-date" id="story-date"></span>
+            </div>
+            <div class="story-content" id="story-content">
+                <div class="loading-story">Chargement de l'histoire du jour...</div>
+            </div>
+        </div>
+        
+        <!-- Section Entrées -->
+        <div class="menu-header">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🥗</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Nos Entrées</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item">
+                <span class="item-name">Salade Verte</span>
+                <span class="item-price">CHF 5.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <span class="item-name">Salade Tomate</span>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <span class="item-name">Salade Mêlée</span>
+                <span class="item-price">CHF 7.50.-</span>
+            </div>
+            
+            <div class="menu-item" style="position: relative;">
+                <span class="item-name">Cocktail de Crevettes</span>
+                <span class="item-price">CHF 11.00.-</span>
+                <div style="position: absolute; right: -100px; top: -20px; font-size: 40px;">🍸🦐</div>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title">Divers accras & Rissoles</div>
+                <div class="accras-list">
+                    <div class="accras-item">Crevettes</div>
+                    <div class="accras-item">Morue</div>
+                    <div class="accras-item">Bœuf</div>
+                    <div class="accras-item">Thon</div>
+                    <div class="accras-item">Poulet</div>
+                    <div class="accras-item">Cochon de lait</div>
+                </div>
+                <div class="accras-price">CHF 2.50.- /pc</div>
+                
+                <div class="melange-item">
+                    Mélange de 6 pièces d'accras et/ou Rissoles
+                    <div class="item-price" style="margin-top: 10px;">CHF 13.00.-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Spécialités de la Maison -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🍖</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Les Spécialités de la Maison</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Poulet Grillé</span>
+                    <div class="item-description">(Demi-poulet grillé, frites et riz)</div>
+                </div>
+                <span class="item-price">CHF 20.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Travers de porc grillé</span>
+                    <div class="item-description">(Servi avec frites et riz)</div>
+                </div>
+                <span class="item-price">CHF 26.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Poitrines de porc grillée</span>
+                    <div class="item-description">(Servi avec frites et riz)</div>
+                </div>
+                <span class="item-price">CHF 20.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Grillade mixte de viandes</span>
+                    <div class="item-description" style="margin-bottom: 5px;">Poulet, Travers de porc,</div>
+                    <div class="item-description" style="margin-bottom: 5px;">Poitrine de porc, Saucisse grillée</div>
+                    <div class="item-description">(Servi avec frites et riz)</div>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="font-size: 22px; margin-top: 40px;">Nos accompagnements au choix</div>
+                <div class="accras-list">
+                    <div class="accras-item">Frites, riz, légumes du jour sautés,</div>
+                    <div class="accras-item">Pommes au four, pâtes</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Le côté Viande -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🥩</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Le côté Viande</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bitoque</span>
+                    <div class="item-description">Steak de bœuf, œuf, frites, riz et salade</div>
+                </div>
+                <span class="item-price">CHF 28.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Steak de Bœuf</span>
+                </div>
+                <span class="item-price">CHF 27.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Entrecôte de Bœuf</span>
+                </div>
+                <span class="item-price">CHF 33.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Secretos de porco Preto</span>
+                </div>
+                <span class="item-price">CHF 28.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Francesinha com Fritas</span>
+                    <div class="item-description">Toast, saucisse, viande de bœuf, jambon, fromage et œuf</div>
+                </div>
+                <span class="item-price">CHF 25.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Picanha</span>
+                    <div class="item-description">Aiguillette de bœuf grillée, haricots noirs, frites et riz</div>
+                </div>
+                <span class="item-price">CHF 32.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Viande sur ardoise</span>
+                    <div class="item-description">Pavé de Bœuf 300gr, frites & légumes</div>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title">Nos sauces</div>
+                <div class="accras-list">
+                    <div class="accras-item">Moutarde & Poivres CHF 4.50.-</div>
+                    <div class="accras-item">Bélets CHF 7.00.-</div>
+                    <div class="accras-item">Morilles CHF 9.00.-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Nos Poissons -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🐟</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Nos Poissons</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gambas à l'ail</span>
+                    <div class="item-description">(Entières ou décortiquées)</div>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gambas à la provençale</span>
+                    <div class="item-description">(Entières ou décortiquées)</div>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Pavé de saumon grillé</span>
+                    <div class="item-description">(Provenance: océan atlantique)</div>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Calamars à la Romaine</span>
+                    <div class="item-description">Calamars panés, sauce tartare et frites</div>
+                </div>
+                <span class="item-price">CHF 22.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bacalhau à Braga</span>
+                    <div class="item-description">Morue frite à l'huile d'olive, sauce poivrons et oignons</div>
+                    <div class="item-description">(Délai d'attente: 30min)</div>
+                </div>
+                <span class="item-price">CHF 32.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bacalhau à Lagareiro</span>
+                    <div class="item-description">Morue grillée au four à l'huile d'olive et ail</div>
+                    <div class="item-description">(Délai d'attente: 30min)</div>
+                </div>
+                <span class="item-price">CHF 32.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Polvo à Lagareiro</span>
+                    <div class="item-description">Poulpe grillé au four à l'huile d'olive et ail</div>
+                    <div class="item-description">(Délai d'attente : 30min)</div>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Filets de Perche façon meunière</span>
+                    <div class="item-description">Frites et sauce tartare</div>
+                    <div class="item-description">(Provenance : Estonie)</div>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+        </div>
+
+        <!-- Section Nos pâtes, menu enfant & Fondues -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🍝</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Nos pâtes, menu enfant & Fondues</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-section" style="margin-top: 0;">
+                <div class="section-title" style="font-style: italic; text-decoration: underline;">Pâtes</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Spaghetti à la Carbonara</span>
+                </div>
+                <span class="item-price">CHF 21.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Spaghetti à la Bolognaise</span>
+                </div>
+                <span class="item-price">CHF 20.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gnocchi à la crème gorgonzola</span>
+                </div>
+                <span class="item-price">CHF 20.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gnocchi à la provençale</span>
+                </div>
+                <span class="item-price">CHF 20.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="font-style: italic; text-decoration: underline;">Menu enfant</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Je ne sais pas</span>
+                    <div class="item-description">(Saucisse de veau grillée avec frites) - CHF 11.50.-</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Je n'ai pas faim</span>
+                    <div class="item-description">(Poulet grillé avec frites) - CHF 12.00.-</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Je m'en fiche</span>
+                    <div class="item-description">(Nuggets avec frites) - CHF 11.50.-</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Peu importe</span>
+                    <div class="item-description">(Spaghettis carbonara / bolognaise) - CHF 13.00.-</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="font-style: italic; text-decoration: underline;">Fondue Fromage</div>
+                <div class="accras-item" style="margin-bottom: 20px;">(Saison d'hiver)</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Moitié-Moitié</span>
+                </div>
+                <span class="item-price">CHF 23.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Aux bolets</span>
+                </div>
+                <span class="item-price">CHF 26.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Aux morilles</span>
+                </div>
+                <span class="item-price">CHF 28.00.-</span>
+            </div>
+        </div>
+        
+        <!-- Section Desserts -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🍰</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Dessert</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gâteau biscuit</span>
+                </div>
+                <span class="item-price">CHF 7.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Tiramisu</span>
+                </div>
+                <span class="item-price">CHF 7.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Pudding (Flan)</span>
+                </div>
+                <span class="item-price">CHF 7.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Cheesecake au fruit rouge</span>
+                </div>
+                <span class="item-price">CHF 7.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Fondant au chocolat</span>
+                </div>
+                <span class="item-price">CHF 7.50</span>
+            </div>
+        </div>
+        
+        <!-- Section Glaces -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🍨</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Nos Glaces</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-section" style="margin-top: 0;">
+                <div class="section-title" style="text-decoration: underline;">Coupes Glacées</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Moonlight</span>
+                    <div class="item-description">Glaces Vanille, Pistache</div>
+                    <div class="item-description">Sorbet Mangue</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Maison</span>
+                    <div class="item-description">Glaces Vanille, Fraise, Sorbet</div>
+                    <div class="item-description">Citron</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Jazz Dance</span>
+                    <div class="item-description">Stracciatella, Vanille, Mocca</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Cha Cha Cha</span>
+                    <div class="item-description">Glaces Caramellissimo, Mocca,</div>
+                    <div class="item-description">Chocolat</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Le Colonel</span>
+                    <div class="item-description">Sorbet Citron arrosé de Vodka</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Le Valaisan</span>
+                    <div class="item-description">Sorbet Abricot arrosé</div>
+                    <div class="item-description">d'Abricotine</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Blues</span>
+                    <div class="item-description">Sorbet Williams arrosé de</div>
+                    <div class="item-description">Williamine</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">General</span>
+                    <div class="item-description">Glace Vanille arrosée de</div>
+                    <div class="item-description">Whisky</div>
+                </div>
+                <span class="item-price">Fr. 9.00</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Parfums de Glaces</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Mocca</span>
+                    <div class="item-description">"a. noisettes croquantes"</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Chocolat</span>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Vanille</span>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Stracciatella</span>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Pistache</span>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Caramellissimo</span>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Fraise</span>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Poire Williams</span>
+                    <div class="item-description" style="color: #4caf50;">VEGAN</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Citron</span>
+                    <div class="item-description" style="color: #4caf50;">VEGAN</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Abricot</span>
+                    <div class="item-description" style="color: #4caf50;">VEGAN</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Mangue</span>
+                    <div class="item-description" style="color: #4caf50;">VEGAN</div>
+                </div>
+                <span class="item-price"></span>
+            </div>
+        </div>
+        
+        <!-- Section Nos Boissons -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🍹</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Nos Boissons</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-section" style="margin-top: 0;">
+                <div class="section-title" style="text-decoration: underline;">Eaux Minérales</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Arkina (nature/verte) 1L</span>
+                </div>
+                <span class="item-price">CHF 10.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">San Pellegrino 50 cl</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Arkina (nature/verte) 35cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Acqua Panna 50cl</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Limonades</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Ice Tea Pêche / Citron 33cl</span>
+                </div>
+                <span class="item-price">CHF 5.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Jus de pommes 33cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Sumol orange/ananas 33cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Fanta 33cl</span>
+                </div>
+                <span class="item-price">CHF 5.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Coca Cola / zéro 33cl</span>
+                </div>
+                <span class="item-price">CHF 5.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Sprite 33 cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Red Bull 25cl</span>
+                </div>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Jus de fruit</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Jus d'orange pressé 2dl</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Jus de citron pressé 2dl</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Boissons au verre</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Jus d'orange / jus de pommes 3 dl</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Thé froid pêche, citron 3 dl</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Jus d'orange / thé froid 5dl</span>
+                </div>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Diabolo menthe & parisien nature 3 dl</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Diabolo menthe & parisien nature 5 dl</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Limonade citron 5 dl</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Bières blondes pression</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bière blonde / panachée / grenadine / monaco 3dl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bière blonde / panachée / grenadine / monaco 5dl</span>
+                </div>
+                <span class="item-price">CHF 7.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Bières en bouteilles</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Super Bock / Sagres 25cl</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bière blonde sans alcool, Sagres sans alcool 33cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Erdinger blanche 50cl</span>
+                </div>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Heineken 25cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Apéritif</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Campari 4cl</span>
+                </div>
+                <span class="item-price">CHF 6.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Kir 1dl</span>
+                </div>
+                <span class="item-price">CHF 6.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Kir Royal 1dl</span>
+                </div>
+                <span class="item-price">CHF 10.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Spritz /Hugo</span>
+                </div>
+                <span class="item-price">CHF 12.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Bitter rouge (sans alcool) 2cl</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Pastis 51 / Ricard (demi) 2cl</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Pastis 51 / Ricard (entier) 4cl</span>
+                </div>
+                <span class="item-price">CHF 7.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Coupe de prosecco 1dl</span>
+                </div>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Porto Rouge / Blanc 4cl</span>
+                </div>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Martini Rouge / Blanc 4cl</span>
+                </div>
+                <span class="item-price">CHF 6.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Caféterie</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Café / expresso / ristretto</span>
+                </div>
+                <span class="item-price">CHF 3.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Renversé</span>
+                </div>
+                <span class="item-price">CHF 3.80.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Capuccino</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Chocolat chaud / froid</span>
+                </div>
+                <span class="item-price">CHF 4.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Café arrosé : pomme, pruneau, grappa</span>
+                </div>
+                <span class="item-price">CHF 6.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Thé et Infusions</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Thé noir</span>
+                </div>
+                <span class="item-price">CHF 3.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Infusions</span>
+                    <div class="item-description">(Camomille, cynorrhodon, menthe, tilleul, verveine, mélisse, fruits rouges, vert)</div>
+                </div>
+                <span class="item-price">CHF 3.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Whisky</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">J&B , Ballantine's 40% 2 cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">J&B , Ballantine's 40% 4 cl</span>
+                </div>
+                <span class="item-price">CHF 14.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Liqueurs</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Licor Beirão 22% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Amendoa amarga 19% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Amaretto 28% 4 cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Baileys 17% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Limoncello 25% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Cognac et Eaux-de-vie</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Grand Armagnac 36% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Eau de vie Abricotine 37,5 % 4cl</span>
+                </div>
+                <span class="item-price">CHF 10.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Eau de vie Williamine 37,5% 4cl</span>
+                </div>
+                <span class="item-price">CHF 10.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Brandy 36% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Aldeia velha / Sousete 40% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Kirsch 37,5% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Macieira 36% 4cl</span>
+                </div>
+                <span class="item-price">CHF 8.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Spiritueux</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Malibu coco 21% 4cl</span>
+                </div>
+                <span class="item-price">CHF 11.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gin Gordon's 37,5% 4cl</span>
+                </div>
+                <span class="item-price">CHF 11.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Rhum Bacardi 50% 4cl</span>
+                </div>
+                <span class="item-price">CHF 11.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Vodka Smirnoff 40% 4cl</span>
+                </div>
+                <span class="item-price">CHF 11.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Champagne</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Flûte de champagne 1dl</span>
+                </div>
+                <span class="item-price">CHF 10.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Champagne Bouteille</span>
+                </div>
+                <span class="item-price">CHF 70.00.-</span>
+            </div>
+        </div>
+        
+        <!-- Section Nos Vins -->
+        <div class="menu-header" style="margin-top: 60px;">
+            <div class="header-decoration">
+                <div class="header-line"></div>
+                <div class="header-image">🍷</div>
+                <div class="header-line"></div>
+            </div>
+            <h1>Nos Vins</h1>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-section" style="margin-top: 0;">
+                <div class="section-title" style="text-decoration: underline;">Nos Vins au verre</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">1 dl Rosé</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">1 dl Rouge</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">1 dl Blanc</span>
+                </div>
+                <span class="item-price">CHF 4.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">1 dl Rosé supérieur</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">1 dl Rouge supérieur</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">1 dl Blanc supérieur</span>
+                </div>
+                <span class="item-price">CHF 5.50.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Nos Rosés 75cl</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Mateus</span>
+                </div>
+                <span class="item-price">CHF 25.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Plexus</span>
+                </div>
+                <span class="item-price">CHF 25.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Casal Mendes</span>
+                </div>
+                <span class="item-price">CHF 25.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Piano</span>
+                </div>
+                <span class="item-price">CHF 28.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Capoeira</span>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Martha's</span>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Vins Blancs 75cl</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Piano</span>
+                </div>
+                <span class="item-price">CHF 28.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Pomares</span>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Casabel</span>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Planalto Douro reserve</span>
+                </div>
+                <span class="item-price">CHF 45.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Nos Vins Rouges 75cl</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Casa de Santar</span>
+                </div>
+                <span class="item-price">CHF 37.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Quinta do Cabriz</span>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Grão Vasco</span>
+                </div>
+                <span class="item-price">CHF 30.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Esteva</span>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Papa Figos</span>
+                </div>
+                <span class="item-price">CHF 39.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">370 Léguas Reserva</span>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Catedral Reserva</span>
+                </div>
+                <span class="item-price">CHF 40.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Piano Reserva</span>
+                </div>
+                <span class="item-price">CHF 35.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Carm Reserva</span>
+                </div>
+                <span class="item-price">CHF 60.00.-</span>
+            </div>
+            
+            <div class="menu-section">
+                <div class="section-title" style="text-decoration: underline;">Vinho Verde 75cl</div>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Casal Garcia</span>
+                </div>
+                <span class="item-price">CHF 25.00.-</span>
+            </div>
+            
+            <div class="menu-item">
+                <div>
+                    <span class="item-name">Gazela</span>
+                </div>
+                <span class="item-price">CHF 25.00.-</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            *Tous nos prix incluent la TVA*
+        </div>
+    </div>
+</body>
+</html>
