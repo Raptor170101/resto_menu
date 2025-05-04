@@ -1,0 +1,42 @@
+name: Update Weekly Suggestion
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+# Ajouter les permissions ici
+permissions:
+  contents: write
+
+jobs:
+  update-suggestion:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install openai
+    
+    - name: Generate new suggestion
+      env:
+        KAAMELOTT_API: ${{ secrets.KAAMELOTT_API }}
+      run: |
+        python generate_suggestion.py
+    
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add suggestion.json
+        git commit -m "Update weekly suggestion - $(date +'%Y-%m-%d')"
+        git push
