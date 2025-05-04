@@ -24,6 +24,9 @@ jobs:
     - name: Install dependencies
       run: |
         pip install requests
+        
+    - name: Install OpenAI library
+      run: pip install openai
 
     - name: Generate story of the day
       run: |
