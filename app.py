@@ -13,6 +13,14 @@ print(f"Clé API chargée: {'Oui' if api_key else 'Non'}")
 # Initialiser le client OpenAI
 client = OpenAI(api_key=api_key)
 
+@app.route('/api/story-of-the-day', methods=['GET'])
+def get_story_of_the_day():
+    try:
+        with open('story.json', 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/daily-story', methods=['POST'])
 def get_daily_story():
     print("Requête reçue sur /api/daily-story")
