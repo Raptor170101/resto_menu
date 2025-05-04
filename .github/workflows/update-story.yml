@@ -1,42 +1,37 @@
-name: Update Weekly Suggestion
+name: Daily Story Update
 
 on:
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * *'  # Tous les jours à minuit UTC
   workflow_dispatch:
 
-# Ajouter les permissions ici
 permissions:
   contents: write
 
 jobs:
-  update-suggestion:
+  update-daily-story:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-    
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install openai
-    
-    - name: Generate new suggestion
-      env:
-        KAAMELOTT_API: ${{ secrets.KAAMELOTT_API }}
+        pip install requests
+
+    - name: Generate story of the day
       run: |
-        python generate_suggestion.py
-    
-    - name: Commit and push changes
+        python generate_story.py
+
+    - name: Commit and push if story changed
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add suggestion.json
-        git commit -m "Update weekly suggestion - $(date +'%Y-%m-%d')"
-        git push
+        git add story.json
+        git diff --cached --quiet && echo "No changes" || (git commit -m "Update daily story - $(date +'%Y-%m-%d')" && git push)
