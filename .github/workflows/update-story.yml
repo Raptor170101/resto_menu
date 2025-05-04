@@ -29,6 +29,8 @@ jobs:
       run: pip install openai
 
     - name: Generate story of the day
+      env:
+        KAAMELOTT_API: ${{ secrets.KAAMELOTT_API }}
       run: |
         python generate_story.py
 
