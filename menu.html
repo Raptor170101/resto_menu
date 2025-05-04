@@ -215,114 +215,40 @@
         }
     </style>
     <script>
-        // Configuration pour l'API
-        const API_ENDPOINT = '/api/daily-story'; // Votre endpoint backend
-        
-        // Fonction pour obtenir la date du jour au format YYYY-MM-DD
-        function getTodayDate() {
-            const today = new Date();
-            return today.toISOString().split('T')[0];
-        }
-        
-        // Fonction pour formater la date en français
-        function formatDateFr(dateStr) {
-            const date = new Date(dateStr);
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return date.toLocaleDateString('fr-FR', options);
-        }
-        
-        // Fonction pour générer une seed unique basée sur la date
-        function generateSeed(dateStr) {
-            let hash = 0;
-            for (let i = 0; i < dateStr.length; i++) {
-                const char = dateStr.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32-bit integer
-            }
-            return Math.abs(hash);
-        }
-        
-        // Fonction pour obtenir l'histoire du jour via le backend
-        async function getDailyStory() {
-    const storyContent = document.getElementById('story-content');
-    const storyDate = document.getElementById('story-date');
-    const today = getTodayDate();
-    
-    // Vérifier si une histoire est déjà en cache pour aujourd'hui
-    const cachedStory = localStorage.getItem(`story-${today}`);
-    
-    if (cachedStory) {
-        storyContent.innerHTML = cachedStory;
-        storyDate.textContent = formatDateFr(today);
-        return;
+    // Fonction pour formater une date en français
+    function formatDateFr(dateStr) {
+        const date = new Date(dateStr);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('fr-FR', options);
     }
-    
-    try {
-        storyContent.innerHTML = '<div class="loading-story">Chargement de l\'histoire du jour...</div>';
-        
-        const seed = generateSeed(today);
-        const topics = [
-            "une tradition culinaire portugaise méconnue",
-            "une légende portugaise fascinante",
-            "un fait historique surprenant sur le Portugal",
-            "une anecdote sur un plat typique portugais",
-            "une histoire sur la culture vinicole portugaise",
-            "un récit sur les navigateurs portugais",
-            "une tradition festive portugaise",
-            "une histoire sur l'artisanat portugais",
-            "une anecdote sur la musique fado",
-            "un fait intéressant sur l'architecture portugaise"
-        ];
-        
-        const topicIndex = seed % topics.length;
-        const selectedTopic = topics[topicIndex];
-        
-        console.log('Envoi de la requête avec:', { topic: selectedTopic, seed: seed });
-        
-        // Appel à votre endpoint backend
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                topic: selectedTopic,
-                seed: seed
-            })
-        });
-        
-        console.log('Statut de la réponse:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Erreur serveur:', errorText);
-            throw new Error(`Erreur serveur (${response.status}): ${errorText}`);
+
+    // Fonction pour récupérer l'histoire du jour via l'API serveur
+    async function loadDailyStory() {
+        const storyContent = document.getElementById('story-content');
+        const storyDate = document.getElementById('story-date');
+
+        try {
+            storyContent.innerHTML = '<div class="loading-story">Chargement de l\'histoire du jour...</div>';
+
+            const response = await fetch('/api/story-of-the-day');
+            if (!response.ok) throw new Error(`Erreur serveur (${response.status})`);
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            storyContent.innerHTML = data.story;
+            storyDate.textContent = formatDateFr(data.date);
+
+        } catch (error) {
+            console.error('Erreur détaillée :', error);
+            storyContent.innerHTML = `<div class="error-message">Erreur : ${error.message}</div>`;
         }
-        
-        const data = await response.json();
-        console.log('Données reçues:', data);
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        const story = data.story;
-        
-        // Mettre en cache l'histoire du jour
-        localStorage.setItem(`story-${today}`, story);
-        
-        storyContent.innerHTML = story;
-        storyDate.textContent = formatDateFr(today);
-        
-    } catch (error) {
-        console.error('Erreur détaillée:', error);
-        storyContent.innerHTML = `<div class="error-message">Erreur: ${error.message}<br>Consultez la console pour plus de détails.</div>`;
     }
-}
-        
-        // Charger l'histoire au chargement de la page
-        window.addEventListener('load', getDailyStory);
-    </script>
+
+    // Charger l'histoire dès le chargement de la page
+    window.addEventListener('load', loadDailyStory);
+</script>
+
 </head>
 <body>
     <div class="menu-container">
