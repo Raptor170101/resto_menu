@@ -265,6 +265,273 @@ window.addEventListener('load', getDailyStory);
         </div>
         
         <!-- Section Entrées -->
+        <!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu du Restaurant</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f8f8;
+            color: #4a3030;
+        }
+        
+        .menu-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #d1c7c7;
+        }
+        
+        .story-section {
+            background-color: #f9f5f0;
+            border-bottom: 2px solid #8b3a3a;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .story-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .story-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: #8b3a3a;
+            font-style: italic;
+        }
+        
+        .story-date {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .story-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4a3030;
+            text-align: justify;
+        }
+        
+        .loading-story {
+            text-align: center;
+            color: #8b3a3a;
+            font-style: italic;
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .menu-header {
+            text-align: center;
+            padding: 30px 20px;
+            position: relative;
+        }
+        
+        .header-decoration {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .header-line {
+            height: 5px;
+            background-color: #8b3a3a;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        .header-image {
+            margin: 0 20px;
+            font-size: 50px;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-style: italic;
+            color: #2a2a2a;
+            margin: 10px 0;
+        }
+        
+        .menu-items {
+            padding: 0 40px 40px;
+        }
+        
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .item-name {
+            font-size: 20px;
+            color: #8b3a3a;
+            font-weight: 600;
+        }
+        
+        .item-description {
+            font-size: 16px;
+            color: #4a3030;
+            margin-top: 5px;
+        }
+        
+        .item-price {
+            font-size: 18px;
+            color: #4a3030;
+            font-weight: bold;
+        }
+        
+        .menu-section {
+            margin: 40px 0;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            color: #8b3a3a;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .accras-list {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .accras-item {
+            font-size: 18px;
+            color: #4a3030;
+            margin: 8px 0;
+        }
+        
+        .accras-price {
+            font-size: 18px;
+            color: #4a3030;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .melange-item {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 20px;
+            color: #8b3a3a;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 40px;
+        }
+        
+        .item-illustration {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .cocktail-glass {
+            right: 50px;
+            top: 50%;
+        }
+        
+        .accras-icon {
+            left: 50px;
+            bottom: 30%;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .menu-items {
+                padding: 0 20px 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .item-illustration {
+                display: none;
+            }
+            
+            .header-line {
+                max-width: 100px;
+            }
+        }
+    </style>
+    <script>
+// Fonction pour formater la date en français
+function formatDateFr(dateStr) {
+    const date = new Date(dateStr);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('fr-FR', options);
+}
+
+// Fonction pour charger l'histoire depuis story.json
+async function getDailyStory() {
+    const storyContent = document.getElementById('story-content');
+    const storyDate = document.getElementById('story-date');
+
+    try {
+        storyContent.innerHTML = '<div class="loading-story">Chargement de l\'histoire du jour...</div>';
+
+        const response = await fetch('story.json');
+        if (!response.ok) {
+            throw new Error(`Erreur serveur (${response.status})`);
+        }
+
+        const data = await response.json();
+        if (!data || !data.story || !data.date) {
+            throw new Error('Fichier story.json invalide ou incomplet.');
+        }
+
+        storyContent.innerHTML = data.story;
+        storyDate.textContent = formatDateFr(data.date);
+    } catch (error) {
+        console.error('Erreur détaillée:', error);
+        storyContent.innerHTML = `<div class="error-message">Erreur: ${error.message}</div>`;
+    }
+}
+
+window.addEventListener('load', getDailyStory);
+</script>
+</head>
+<body>
+    <div class="menu-container">
+        <!-- Section Histoire du Jour -->
+        <div class="story-section">
+            <div class="story-header">
+                <h2 class="story-title">🇵🇹 Histoire du Jour</h2>
+                <span class="story-date" id="story-date"></span>
+            </div>
+            <div class="story-content" id="story-content">
+                <div class="loading-story">Chargement de l'histoire du jour...</div>
+            </div>
+        </div>
+        
+        <!-- Section Entrées -->
         <div class="menu-header">
             <div class="header-decoration">
                 <div class="header-line"></div>
